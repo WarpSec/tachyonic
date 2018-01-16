@@ -27,9 +27,21 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-from luxon import register_middleware
-import luxon.resources.wsgi.token
-from luxon.middleware.wsgi.token import Token
-register_middleware(Token)
+
+def start(name, app_root=None, virtualenv=None):
+    # Activate your virtualenv
+    if virtualenv is not None:
+        activate_this = virtualenv.rstrip('/') + '/bin/activate_this.py'
+        exec(open(activate_this).read())
+
+    # Import after virtualenv, since luxon could be inside of the env.
+    from luxon.core.handlers.wsgi import Wsgi
+    app = Wsgi(name, app_root)
+
+    # This the place to start importing luxon packages/modules.
+    import tachyonic
+
+    return app
 
 
+application = start(__name__)
