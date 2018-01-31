@@ -27,9 +27,4 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-import tachyonic.models
-from luxon import register_middleware
-import luxon.resources.wsgi.token
-from luxon.middleware.wsgi.token import Token
-register_middleware(Token)
-
+from luxon import db
