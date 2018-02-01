@@ -27,10 +27,33 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
-import tachyonic.models
-from luxon import register_middleware
-import luxon.resources.wsgi.token
-from luxon.middleware.wsgi.token import Token
-register_middleware(Token)
-import tachyonic.views
+from uuid import uuid4
 
+from luxon import database_model
+from luxon import Models
+from luxon import Uuid
+from luxon import String
+from luxon import Text
+from luxon import DateTime
+from luxon import Boolean
+from luxon import Email
+from luxon import Phone
+from luxon import Enum
+from luxon import Index
+from luxon import ForeignKey
+from luxon import UniqueIndex
+from luxon.utils.timezone import now
+
+@database_model()
+class endpoint(Models):
+    id = Uuid(default=uuid4)
+    name = String(max_length=64)
+    interface = Enum('public', 'internal', 'admin')
+    region = String(max_length=64)
+    uri = String(max_length=64)
+    creation_time = DateTime(default=now)
+    primary_key = id
+    unique_endpoint = UniqueIndex(interface, uri)
+    endpoint_name = Index(name)
+    endpoint_find = Index(name, interface)
+    endpoint_exact = Index(name, interface, region)
