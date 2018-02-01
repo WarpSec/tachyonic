@@ -268,7 +268,12 @@ setup_dict = dict(
         'flake8==2.1.0',
     ],
     cmdclass={'test': TestAllCommand},
-    zip_safe=False  # don't use eggs
+    zip_safe=False,  # don't use eggs
+    entry_points={
+        'console_scripts': [
+            'tachyonic = tachyonic.main:entry_point'
+        ],
+    }
 )
 
 def main():
