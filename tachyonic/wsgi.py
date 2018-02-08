@@ -39,7 +39,7 @@ def start(name, app_root=None, virtualenv=None):
     app = Wsgi(name, app_root)
 
     # This the place to start importing luxon packages/modules.
-    import tachyonic
+    import tachyonic.app
 
     return app
 
