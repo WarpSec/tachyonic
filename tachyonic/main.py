@@ -38,100 +38,61 @@ if not sys.version_info >= (3,5):
     print('Requires python version 3.5 or higher')
     exit()
 
-from tachyonic import metadata
 from luxon import g
-from luxon.core.config import Config
-from luxon import db
-from luxon import js
-from luxon.exceptions import SQLError
+from luxon.core.handlers.script import Script
+from luxon.utils.encoding import if_bytes_to_unicode
+from luxon import register_resource
+from luxon import register_middleware
+from luxon.middleware.script.auth import Auth
+from luxon.utils.formatting import format_obj
 
-from tachyonic.models.endpoints import endpoint as endpoint_model
+from tachyonic import metadata
 
-def list_endpoints(conn, args):
-    endpoints = endpoint_model()
-    print(endpoints.to_json())
+@register_resource('SCRIPT', 'endpoints')
+def endpoints(req, resp):
+    group = req.parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-l',
+                       action='store_true',
+                       dest='list_endpoints',
+                       default=False,
+                       help='List endpoints')
+    group.add_argument('-d',
+                       dest='delete_id',
+                       help='Delete Endpoint by ID')
+    group.add_argument('-c',
+                       dest='endpoint_name',
+                       help='Create Endpoint')
 
-def new_endpoint(conn, args):
-    endpoints = endpoint_model()
-    new = endpoints.new()
-    new['name'] = args.new_endpoint
-    new['interface'] = args.interface
-    new['region'] = args.region
-    new['uri'] = args.uri
-    endpoints.commit()
-    print(new.to_json())
-
-def delete_endpoint(conn, args):
-    conn.execute('DELETE FROM endpoint WHERE id = %s',
-                args.delete_endpoint_id)
-    conn.commit()
+    req.parser.add_argument('--uri',
+                            help='URI for endpoint',
+                            default=None)
+    req.parser.add_argument('--interface',
+                            help='Inteface (public|internal|admin)',
+                            default='public')
+    req.parser.add_argument('--region',
+                            help='Region name for endpoint',
+                            default='default')
+    args = req.parser.parse_args()
+    if args.endpoint_name is not None:
+        res = g.api.new_endpoint(args.endpoint_name,
+                                 args.interface,
+                                 args.region,
+                                 args.uri)
+        return format_obj(res.json)
+    elif args.list_endpoints is True:
+        res = g.api.list_endpoints()
+        return format_obj(res.json)
+    elif args.delete_id is not None:
+        res = g.api.delete_endpoint(args.delete_id)
 
 def main(argv):
-    description = metadata.description + ' ' + metadata.version
-    print("%s\n" % description)
+    script = Script(__name__, app_root='.')
+    register_middleware(Auth)
 
-    parser = argparse.ArgumentParser(description=description)
-    group = parser.add_mutually_exclusive_group(required=True)
-
-    parser.add_argument('settings_ini',
-                        help='Tachyonic settings.ini path')
-
-    group.add_argument('-l',
-                       dest='funcs',
-                       action='append_const',
-                       const=list_endpoints,
-                       help='List endpoints')
-
-    group.add_argument('-a',
-                       dest='new_endpoint',
-                       help='Add Endpoint')
-
-    group.add_argument('-d',
-                       dest='delete_endpoint_id',
-                       help='Delete Endpoint by ID')
-
-    parser.add_argument('--uri',
-                       help='Absolute URI to Endpoint API',
-                       default=None)
-
-    parser.add_argument('--region',
-                       help='Region name',
-                       default='default')
-
-    parser.add_argument('--interface',
-                       help='(public|internal|admin)',
-                       default='public')
-
-    args = parser.parse_args()
-
-    ini_file = os.path.abspath(args.settings_ini)
-    g.config = Config()
-
-    try:
-        g.config.load(ini_file)
-    except FileNotFoundError as e:
-        print(e)
-        exit()
-
-    g.app_root = ini_file.replace('settings.ini','')
-
-    try:
-        with db() as conn:
-            if args.funcs is not None:
-                for func in args.funcs:
-                    func(conn, args)
-
-            if args.new_endpoint is not None:
-                if args.uri is None:
-                    print('Require URI for endpoint')
-                    exit()
-                new_endpoint(conn, args)
-
-            if args.delete_endpoint_id is not None:
-                delete_endpoint(conn, args)
-    except SQLError as e:
-        print(e)
-        exit()
+    val = script(metadata).read()
+    if val:
+        val = if_bytes_to_unicode(val)
+        print(val)
 
 
 def entry_point():
