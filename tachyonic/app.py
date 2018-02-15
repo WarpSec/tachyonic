@@ -29,12 +29,10 @@
 # THE POSSIBILITY OF SUCH DAMAGE.
 import tachyonic.models
 from luxon import register_middleware
-import luxon.resources.wsgi.token
-from luxon.middleware.wsgi.token import Token
+from luxon.middleware.wsgi.api.token import Token
 from luxon.middleware.policy import Policy
 register_middleware(Token)
 register_middleware(Policy)
-import luxon.resources.wsgi.users
-import luxon.resources.wsgi.endpoints
+import luxon.resources.wsgi.api.tachyonic
 import tachyonic.views
 
